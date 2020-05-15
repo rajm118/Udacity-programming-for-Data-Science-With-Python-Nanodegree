@@ -1,0 +1,79 @@
+/*query 1*/				
+
+
+select c.name as name,count(r.rental_id) as count
+  from film f
+  join film_category fc
+  on f.film_id=fc.film_id
+  join category c
+  on c.category_id=fc.category_id
+  join inventory i
+  on f.film_id=i.film_id
+  join rental r
+  on i.inventory_id=r.inventory_id
+group by 1
+order by 2 desc
+
+
+
+/*query 2*/
+
+
+select c.name as genre,round(avg(f.rental_duration),1) as avg_duration     
+ from film f
+  join film_category fc
+  on f.film_id=fc.film_id
+  join category c
+  on c.category_id=fc.category_id
+  join inventory i
+  on f.film_id=i.film_id
+  join rental r
+  on i.inventory_id=r.inventory_id
+group by 1
+
+
+
+
+/*query 3*/
+
+
+
+/* outer query made on the table generated from inner query*/
+
+select asd.month1 as month,asd.year1 as year,asd.store_id, count(*) count_rentals
+from 
+    (
+     select date_part('month',r.rental_date) as month1 ,date_part('year',r.rental_date) as year1,s.store_id
+     from rental r
+     join staff sf
+     on r.staff_id=sf.staff_id
+     join store s
+     on sf.store_id=s.store_id
+    ) asd
+where asd.month1 in ('5','6')
+group by 1,2,3
+order by 1,4 desc
+
+
+
+/*query 4*/
+
+
+WITH t1 AS
+(   SELECT c.name category,
+    NTILE(4) OVER (ORDER BY f.rental_duration) AS standard_quartile
+    FROM category c
+    JOIN film_category fc
+    ON c.category_id = fc.category_id
+    JOIN film f
+    ON f.film_id = fc.film_id
+    WHERE c.name IN ('Animation', 'Children','Classics','Comedy','Family','Music')
+    ORDER BY category, standard_quartile
+)
+
+SELECT t1.category, t1.standard_quartile, COUNT(*)
+FROM t1
+where standard_quartile = 3
+GROUP BY 1,2
+ORDER BY category, standard_quartile
+
